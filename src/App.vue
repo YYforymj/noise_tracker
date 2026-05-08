@@ -9,6 +9,7 @@ import StatsGrid from './components/StatsGrid.vue'
 import TrendChart from './components/TrendChart.vue'
 import HistoryList from './components/HistoryList.vue'
 import ActionBar from './components/ActionBar.vue'
+import SeoContent from './components/SeoContent.vue'
 
 const { isDark, toggleTheme } = useTheme()
 const { t, toggleLocale } = useI18n()
@@ -199,6 +200,8 @@ onMounted(() => {
     @toggle="handleToggle"
     @stop="handleStop"
   />
+
+  <SeoContent />
 </template>
 
 <style>

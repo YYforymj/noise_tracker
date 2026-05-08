@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>噪声监测 — Warm Slate Dark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1E1F26;
+    --bg-card: #282A33;
+    --bg-card-hover: #2E3039;
+    --bg-elevated: #33353F;
+    --fg: #E8E6E1;
+    --fg-secondary: #9B99A1;
+    --fg-tertiary: #6B6974;
+    --accent: #E8A44A;
+    --accent-soft: rgba(232, 164, 74, 0.12);
+    --accent-softer: rgba(232, 164, 74, 0.06);
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.03);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --font-sans: 'Nunito', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --level-quiet: #5CB87A;
+    --level-moderate: #E8A44A;
+    --level-loud: #E8644A;
+    --level-danger: #D93636;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: var(--space-lg) var(--space-md) 120px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--fg);
+  }
+
+  .lang-toggle {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .lang-toggle:hover {
+    background: var(--bg-elevated);
+    border-color: var(--fg-tertiary);
+  }
+
+  .db-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: var(--space-xl) var(--space-lg);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--space-md);
+  }
+
+  .db-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .db-value {
+    font-family: var(--font-mono);
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--fg);
+  }
+
+  .db-unit {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--fg-tertiary);
+  }
+
+  .db-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--space-sm);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--level-quiet);
+    background: rgba(92, 184, 122, 0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .db-label.moderate { color: var(--level-moderate); background: rgba(232, 164, 74, 0.1); }
+  .db-label.loud { color: var(--level-loud); background: rgba(232, 100, 74, 0.1); }
+  .db-label.danger { color: var(--level-danger); background: rgba(217, 54, 54, 0.1); }
+
+  .db-label-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md) var(--space-sm);
+    box-shadow: var(--shadow-card);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-tertiary);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .stat-unit {
+    font-size: 11px;
+    color: var(--fg-tertiary);
+    font-weight: 400;
+  }
+
+  .chart-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--space-md);
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fg-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .chart-container {
+    width: 100%;
+    height: 100px;
+  }
+
+  .chart-container svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .history-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+  }
+
+  .history-item + .history-item {
+    border-top: 1px solid var(--border);
+  }
+
+  .history-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .history-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .history-dot.quiet { background: var(--level-quiet); }
+  .history-dot.moderate { background: var(--level-moderate); }
+  .history-dot.loud { background: var(--level-loud); }
+  .history-dot.danger { background: var(--level-danger); }
+
+  .history-time {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-tertiary);
+  }
+
+  .history-db {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .history-level {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .history-level.quiet { color: var(--level-quiet); }
+  .history-level.moderate { color: var(--level-moderate); }
+  .history-level.loud { color: var(--level-loud); }
+  .history-level.danger { color: var(--level-danger); }
+
+  .action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    padding: var(--space-md) var(--space-md) var(--space-xl);
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+  }
+
+  .btn-pause {
+    width: 100%;
+    padding: 16px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn-pause:hover {
+    opacity: 0.9;
+  }
+
+  .btn-pause:active {
+    transform: scale(0.98);
+  }
+
+  .btn-pause.paused {
+    background: var(--bg-card);
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1>噪声监测</h1>
+    <button class="lang-toggle">中 / EN</button>
+  </header>
+
+  <div class="db-card">
+    <div class="db-value-row">
+      <span class="db-value">42</span>
+      <span class="db-unit">dB</span>
+    </div>
+    <div class="db-label quiet">
+      <span class="db-label-dot"></span>
+      安静
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">最低</div>
+      <div class="stat-value">28<span class="stat-unit"> dB</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">平均</div>
+      <div class="stat-value">39<span class="stat-unit"> dB</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最高</div>
+      <div class="stat-value">58<span class="stat-unit"> dB</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">时长</div>
+      <div class="stat-value">12<span class="stat-unit"> min</span></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="section-title">趋势</div>
+    <div class="chart-container">
+      <svg viewBox="0 0 400 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#E8A44A" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#E8A44A" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,70 L30,65 L60,72 L90,58 L120,55 L150,62 L180,50 L210,45 L240,48 L270,40 L300,35 L330,38 L360,32 L400,30 L400,100 L0,100 Z"
+          fill="url(#areaGrad)"
+        />
+        <polyline
+          fill="none"
+          stroke="#E8A44A"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          points="0,70 30,65 60,72 90,58 120,55 150,62 180,50 210,45 240,48 270,40 300,35 330,38 360,32 400,30"
+        />
+        <circle cx="400" cy="30" r="4" fill="#E8A44A"/>
+        <circle cx="400" cy="30" r="7" fill="none" stroke="#E8A44A" stroke-opacity="0.3" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="history-card">
+    <div class="section-title">历史记录</div>
+    <div class="history-item">
+      <div class="history-left">
+        <span class="history-dot quiet"></span>
+        <span class="history-time">14:32</span>
+      </div>
+      <span class="history-db">42 dB</span>
+      <span class="history-level quiet">安静</span>
+    </div>
+    <div class="history-item">
+      <div class="history-left">
+        <span class="history-dot moderate"></span>
+        <span class="history-time">14:27</span>
+      </div>
+      <span class="history-db">58 dB</span>
+      <span class="history-level moderate">适中</span>
+    </div>
+    <div class="history-item">
+      <div class="history-left">
+        <span class="history-dot quiet"></span>
+        <span class="history-time">14:22</span>
+      </div>
+      <span class="history-db">35 dB</span>
+      <span class="history-level quiet">安静</span>
+    </div>
+    <div class="history-item">
+      <div class="history-left">
+        <span class="history-dot loud"></span>
+        <span class="history-time">14:17</span>
+      </div>
+      <span class="history-db">72 dB</span>
+      <span class="history-level loud">嘈杂</span>
+    </div>
+    <div class="history-item">
+      <div class="history-left">
+        <span class="history-dot quiet"></span>
+        <span class="history-time">14:12</span>
+      </div>
+      <span class="history-db">28 dB</span>
+      <span class="history-level quiet">安静</span>
+    </div>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="btn-pause">暂停监测</button>
+</div>
+</body>
+</html>

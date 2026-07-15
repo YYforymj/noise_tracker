@@ -1,6 +1,6 @@
 export default {
   app: {
-    title: 'Noise Monitor',
+    title: 'Noise Monitor Online',
   },
   level: {
     quiet: 'Quiet',

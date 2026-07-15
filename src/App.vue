@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, defineAsyncComponent, ref, onMounted } from 'vue'
 import { useTheme } from './composables/useTheme'
 import { useI18n } from './composables/useI18n'
 import { useNoiseDetector } from './composables/useNoiseDetector'
 import { useNoiseStorage } from './composables/useNoiseStorage'
 import DbCard from './components/DbCard.vue'
 import StatsGrid from './components/StatsGrid.vue'
-import TrendChart from './components/TrendChart.vue'
 import HistoryList from './components/HistoryList.vue'
 import ActionBar from './components/ActionBar.vue'
 import SeoContent from './components/SeoContent.vue'
 
 const { isDark, toggleTheme } = useTheme()
-const { t, toggleLocale } = useI18n()
+const { t, alternateHref } = useI18n()
 const {
   currentDb, currentLevel, isMonitoring, isPaused,
   minDb, maxDb, avgDb, sessionDuration, errorMessage,
@@ -21,6 +20,8 @@ const {
 const {
   startSession, endSession, saveReading, getRecentSessions,
 } = useNoiseStorage()
+
+const TrendChart = defineAsyncComponent(() => import('./components/TrendChart.vue'))
 
 const statsLabels = computed(() => ({
   min: t('stat.min'),
@@ -131,9 +132,9 @@ onMounted(() => {
   <header class="header">
     <h1>{{ t('app.title') }}</h1>
     <div class="header-actions">
-      <button class="lang-toggle" @click="toggleLocale">
+      <a class="lang-toggle" :href="alternateHref">
         {{ t('lang.toggle') }}
-      </button>
+      </a>
       <button class="theme-toggle" @click="toggleTheme" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'">
         {{ isDark ? '☀️' : '🌙' }}
       </button>

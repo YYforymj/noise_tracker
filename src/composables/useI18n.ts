@@ -1,49 +1,56 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import zh from '../locales/zh'
 import en from '../locales/en'
-
-type Locale = 'zh' | 'en'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LocaleData = Record<string, any>
+import {
+  applySeoMetadata,
+  getAlternateLocale,
+  getLocaleFromPath,
+  getLocalePath,
+  type Locale,
+} from '../seo/site'
 
 const STORAGE_KEY = 'noise-tracker-locale'
 
-const locales: Record<Locale, LocaleData> = { zh, en }
+type NoiseLevelItem = {
+  readonly db: string
+  readonly desc: string
+}
+
+type FaqItem = {
+  readonly q: string
+  readonly a: string
+}
+
+type LocaleLeaf = string | readonly string[] | readonly NoiseLevelItem[] | readonly FaqItem[]
+type LocaleMessages = { readonly [key: string]: LocaleLeaf | LocaleMessages }
+
+const locales: Record<Locale, LocaleMessages> = { zh, en }
 
 let initialized = false
-const locale = ref<Locale>('en')
+const locale = ref<Locale>('zh')
 
 function resetLocale() {
   initialized = false
-  locale.value = 'en'
+  locale.value = 'zh'
 }
 
 function initLocale() {
   if (initialized) return
   initialized = true
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'zh' || stored === 'en') {
-    locale.value = stored
-  } else if (typeof navigator !== 'undefined' && navigator.language) {
-    locale.value = navigator.language.startsWith('zh') ? 'zh' : 'en'
+
+  if (typeof window !== 'undefined') {
+    locale.value = getLocaleFromPath(window.location.pathname)
+    return
   }
+
+  const stored = localStorage.getItem(STORAGE_KEY)
+  locale.value = stored === 'en' ? 'en' : 'zh'
 }
 
 watch(locale, (val) => {
   localStorage.setItem(STORAGE_KEY, val)
   if (typeof document !== 'undefined') {
-    document.documentElement.setAttribute('lang', val === 'zh' ? 'zh-CN' : 'en')
-    document.title = val === 'zh'
-      ? '在线噪音监测工具 - 实时分贝 dB 噪声检测'
-      : 'Noise Monitor Online - Real-Time dB Noise Level Tracker'
-    const metaDesc = document.querySelector('meta[name="description"]')
-    if (metaDesc) {
-      metaDesc.setAttribute('content', val === 'zh'
-        ? '在线噪音监测工具，可实时检测环境噪声分贝 dB，查看最低、平均、最高噪音水平，适合日常环境噪声监控。'
-        : 'Free online noise monitor - track real-time environmental sound levels in dB. Measure minimum, average, and maximum noise levels directly in your browser.',
-      )
-    }
+    applySeoMetadata(val)
   }
 })
 
@@ -71,11 +78,9 @@ function raw<T = string | string[] | Array<{ db: string; desc: string } | { q: s
 
 export function useI18n() {
   initLocale()
-  function toggleLocale() {
-    locale.value = locale.value === 'zh' ? 'en' : 'zh'
-  }
+  const alternateHref = computed(() => getLocalePath(getAlternateLocale(locale.value)))
 
-  return { locale, t, raw, toggleLocale, resetLocale }
+  return { locale, t, raw, alternateHref, resetLocale }
 }
 
 export { locale }

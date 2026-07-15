@@ -1,6 +1,6 @@
 export default {
   app: {
-    title: '噪声监测',
+    title: '在线噪音监测工具',
   },
   level: {
     quiet: '安静',

@@ -1,13 +1,6 @@
-import { computed, ref, watch } from 'vue'
-import zh from '../locales/zh'
+import { ref, watch } from 'vue'
 import en from '../locales/en'
-import {
-  applySeoMetadata,
-  getAlternateLocale,
-  getLocaleFromPath,
-  getLocalePath,
-  type Locale,
-} from '../seo/site'
+import { applySeoMetadata, type Locale } from '../seo/site'
 
 const STORAGE_KEY = 'noise-tracker-locale'
 
@@ -24,33 +17,32 @@ type FaqItem = {
 type LocaleLeaf = string | readonly string[] | readonly NoiseLevelItem[] | readonly FaqItem[]
 type LocaleMessages = { readonly [key: string]: LocaleLeaf | LocaleMessages }
 
-const locales: Record<Locale, LocaleMessages> = { zh, en }
+const locales: Record<Locale, LocaleMessages> = { en }
 
 let initialized = false
-const locale = ref<Locale>('zh')
+const locale = ref<Locale>('en')
+
+function persistLocale() {
+  localStorage.setItem(STORAGE_KEY, 'en')
+}
 
 function resetLocale() {
   initialized = false
-  locale.value = 'zh'
+  locale.value = 'en'
+  persistLocale()
 }
 
 function initLocale() {
   if (initialized) return
   initialized = true
-
-  if (typeof window !== 'undefined') {
-    locale.value = getLocaleFromPath(window.location.pathname)
-    return
-  }
-
-  const stored = localStorage.getItem(STORAGE_KEY)
-  locale.value = stored === 'en' ? 'en' : 'zh'
+  locale.value = 'en'
+  persistLocale()
 }
 
 watch(locale, (val) => {
   localStorage.setItem(STORAGE_KEY, val)
   if (typeof document !== 'undefined') {
-    applySeoMetadata(val)
+    applySeoMetadata()
   }
 })
 
@@ -78,9 +70,9 @@ function raw<T = string | string[] | Array<{ db: string; desc: string } | { q: s
 
 export function useI18n() {
   initLocale()
-  const alternateHref = computed(() => getLocalePath(getAlternateLocale(locale.value)))
+  persistLocale()
 
-  return { locale, t, raw, alternateHref, resetLocale }
+  return { locale, t, raw, resetLocale }
 }
 
 export { locale }

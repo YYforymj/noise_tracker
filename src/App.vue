@@ -11,7 +11,7 @@ import ActionBar from './components/ActionBar.vue'
 import SeoContent from './components/SeoContent.vue'
 
 const { isDark, toggleTheme } = useTheme()
-const { t, alternateHref } = useI18n()
+const { t } = useI18n()
 const {
   currentDb, currentLevel, isMonitoring, isPaused,
   minDb, maxDb, avgDb, sessionDuration, errorMessage,
@@ -132,9 +132,6 @@ onMounted(() => {
   <header class="header">
     <h1>{{ t('app.title') }}</h1>
     <div class="header-actions">
-      <a class="lang-toggle" :href="alternateHref">
-        {{ t('lang.toggle') }}
-      </a>
       <button class="theme-toggle" @click="toggleTheme" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'">
         {{ isDark ? '☀️' : '🌙' }}
       </button>
@@ -235,26 +232,6 @@ onMounted(() => {
   display: flex;
   gap: var(--space-sm);
   align-items: center;
-}
-
-.lang-toggle {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--fg-secondary);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  min-height: 36px;
-  min-width: auto;
-}
-
-.lang-toggle:hover {
-  background: var(--bg-elevated);
-  border-color: var(--fg-tertiary);
 }
 
 .theme-toggle {
